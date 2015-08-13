@@ -1,0 +1,190 @@
+  .chart div {
+  font: 20px sans-serif;
+  background-color: steelblue;
+  text-align: right;
+  padding: 3px;
+  margin: 1px;
+  color: white;
+  }
+
+  .chart rect {
+    fill:steelblue;
+  }
+
+  .chart text {
+    fill:white;
+    font: 10px sans-serif;
+  }
+
+  
+  .axis path{
+    stroke: black;
+    fill:none;
+  }
+
+  .axis{
+    font-family: calibri;
+    font-size: 8pt;
+  }
+
+  path.month_odds{
+    stroke:black;
+    fill:none;
+  }
+
+  path.country, path.year{
+    stroke-width:2;
+  }
+
+  .tick line{
+    stroke:lightgrey;
+    stroke-dasharray:1;
+    stroke-opacity:60;
+  }
+
+input[type=checkbox], input[type=radio].checkbox  {
+    display:none;
+}
+
+
+input[type=checkbox].checkbox + label.top_button, input[type=radio].checkbox + label.top_button {
+    background-image: none;
+    outline: 0;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15),0 1px 2px rgba(0,0,0,0.05);
+    background-color:#e0e0e0;
+    
+    display:inline-block;
+    margin:-2px;
+    padding: 4px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: #333;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255,255,255,0.75);
+    vertical-align: middle;
+    cursor: pointer;
+    background-repeat: repeat-x;
+    border: 1px solid #ccc;
+    border-color: #e6e6e6 #e6e6e6 #bfbfbf;
+    border-color: rgba(0,0,0,0.1) rgba(0,0,0,0.1) rgba(0,0,0,0.25);
+    border-bottom-color: #b3b3b3;
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff',endColorstr='#ffe6e6e6',GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+}
+
+input[type=checkbox].checkbox:checked + label.top_button, input[type=radio].checkbox:checked + label.top_button {
+    background-color: #f5f5f5;
+    background-image: -moz-linear-gradient(top,#fff,#e6e6e6);
+    background-image: -webkit-gradient(linear,0 0,0 100%,from(#fff),to(#e6e6e6));
+    background-image: -webkit-linear-gradient(top,#fff,#e6e6e6);
+    background-image: -o-linear-gradient(top,#fff,#e6e6e6);
+    background-image: linear-gradient(to bottom,#fff,#e6e6e6);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff',endColorstr='#ffe6e6e6',GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled=false);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2),0 1px 2px rgba(0,0,0,0.05);
+}
+
+div.tooltip {   
+  position: absolute;           
+  text-align: center;           
+  width: 100px;                  
+  height: 42px;                 
+  padding: 2px;             
+  font: 12px sans-serif;        
+  border: 0px;      
+  border-radius: 8px;           
+  pointer-events: none;         
+}
+
+h1.background_country{
+  position:absolute;
+  text-align: center;
+  font-size:10em;
+  opacity:0.3;
+}
+
+layer.help {
+    background-color: grey;
+    opacity:0.5;
+    position: absolute;
+    top:10px;
+    bottom:10px;
+    right:10px;
+    left:10px;
+    border-radius:25px;
+}
+
+div.help {
+    width: 56px;
+    height: 460px;
+    position: absolute;
+    background-color: white;
+    left: 75px;
+    top: 100px;
+    }
+
+g.help{
+  color:black;
+  fill:black;
+  stroke:black;
+}
+
+text.y_arrow{
+    font-size:10em;
+}
+
+div.help_tooltip{
+    width: 500px;
+    height: 180px;
+    top: 275px;
+    left: 300px;
+    opacity: 0.8;
+    border-radius: 10px;
+    position: absolute;
+    background-color: black;
+    color:white;
+    font-size:1em;
+    padding:5px;
+    text-align:center;
+}
+
+ul{
+  width:70%;
+  margin:auto;
+}
+
+li{
+  text-indent:-50px;
+}
+
+.help_button {
+position:absolute;
+top:20px;
+right:20px;
+width:25px;
+height:25px;
+display:block;
+text-transform:uppercase;
+text-decoration:none;
+color:#fff;
+background:black;
+font-family:"Tahoma", Helvetica, sans-serif;
+text-align:center;
+font-size:18px;
+line-height:1.4em;
+box-shadow:0px 0px 2px 0px #666;
+border-radius:50%;
+font-weight:bold;
+}
+
+label.Month, label.Years{
+ margin-right:5px;
+ font-size:0.9em;
+}
+
+input[type=radio] {
+    vertical-align: top;
+    margin-bottom: 10px;
+    margin-right: 5px;
+}

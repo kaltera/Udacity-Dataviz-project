@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="d3.v3.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="Style_original.css">
+  <script type="text/javascript">
+
+  function draw(data){
+    var all_countries = ["England","France","Germany","Italy","Spain"];
+    var brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+    var indexes_year = {2012:0,2013:1,2014:2,2015:3}
+    var indexes_country = {France:0,England:1,Germany:2,Italy:3,Spain:4};
+    var years = [2012,2013,2014,2015];
+    var analysis_years = 0;
+    var selected_country = "England";
+
+    function agg_odds(leaves){
+      return {
+        'Month' : leaves[0]['Month'],
+        'MonthYear' : format.parse(leaves[0]["MonthYear"]),
+        'Mean_Odds' : d3.median(leaves,function(d){return d['Mean_Odds'];}),
+        'Count' : d3.sum(leaves,function(d){return 1;}),
+        'Season' : leaves[0]["Season"],
+        'Country' : leaves[0]["Country"]
+      }
+
+      }
+
+    function agg_odds_month(leaves){
+
+        var month = format_month.parse(leaves[0].values["Month"]);
+
+        if (month < new Date(1900,06,01)){
+          var month_scale = new Date(1901,month.getMonth(),01);
+        }
+        else{
+          var month_scale = month;
+        }
+      
+      return {
+        'Month' : month_scale,
+        'Mean_Odds' : d3.median(leaves,function(d){return d.values['Mean_Odds'];}),
+        'Count' : d3.sum(leaves,function(d){return d.values['Count'];}),
+        'Season' : leaves[0].values["Season"],
+        'Country' : leaves[0].values["Country"]
+      }
+
+      }
+
+    var margin = 100,
+    width = 1200,
+    height = 800;
+
+    var body = d3.select("body");
+
+    body.append("h1")
+    .text("Predictability of Football Games Outcome by Month (2011-2015)")
+    .style("width","" + (width-3*margin) +"px")
+    .style("position","absolute")
+    .style("left","" + margin + "px")
+    .style("text-align","center");
+
+function draw_buttons(all_countries){
+
+    var buttons = body.append("div")
+    .attr("class","buttons")
+    .style("width", "" + width-3*margin +"px")
+    .style("text-align","center")
+    .style("left","" + margin + "px")
+    .style("position","absolute")
+    .style("top","" + margin + "px");
+
+    var buttons_label = buttons.selectAll("g").data(all_countries);
+
+    var g_label = buttons_label.enter().append("g");
+
+    g_label.append("input")
+    .attr("class",function(d){return "checkbox " + d + "";})
+    .attr("type","checkbox")
+    .attr("id",function(d){return d;})
+    .attr("value",function(d){return d;})
+    .property("checked",true)
+    .attr("name","country_selector")
+    .style("margin-right","20px")
+    .style("vertical-align","bottom");
+
+    g_label.append("label")
+    .attr("for",function(d){return d;})
+    .attr("class",function(d){return "checkbox " + d + " top_button";})
+    .text(function(d){return d;})
+    .style("color",function(d){ return brewer[indexes_country[d]];}); 
+
+    d3.selectAll("input").on("change", function() {
+      var chosen_country = this.value;
+      var checked = this.checked;
+
+      if (checked){
+        add_country(chosen_country);
+      }
+      else{
+        remove_country(chosen_country);
+      }
+    }
+      );
+};
+    
+    draw_buttons(all_countries);
+    draw_legend_analysis();
+    d3.select("body")
+    .append("layer")
+    .attr("class","help")
+    .attr("width", "" + margin + "px")
+    .attr("height", "" + height + "px");
+
+    d3.select("body")
+    .append("a")
+    .attr("class","help_button");
+
+    var help_button = d3.select(".help_button");
+
+draw_help_button_close()
+
+
+function draw_help_button_open(){
+
+      help_button.html("?")
+      .style("background-color","#3399FF")
+      .on("click",function(){
+
+        brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+        all_countries = ["England","France","Germany","Italy","Spain"];
+
+        execute_help = 1;
+        country_index = 0;
+        index_help_interval = 0;
+        help_interval = 0;
+        country_init = [all_countries[country_index]];
+        execute_animation = 1;
+        country_interval = 0;
+
+      svg.select(".graph").remove();
+
+      svg.selectAll("path.country").remove();
+
+      d3.selectAll(".legend_country").remove();
+
+      d3.select("h1")
+      .text("Predictability of Football Games Outcome by Month (2011-2015)");
+
+      d3.select("layer").style("visibility","visible");
+
+      d3.selectAll("input.checkbox")
+      .attr("type","checkbox")
+      .property("checked",true);
+
+      draw_help_button_close();
+
+      d3.selectAll("axis").remove();
+
+      d3.select(".legend_size")
+      .remove();
+
+      draw_legend_size("months");
+
+      if (analysis_years === 1){
+
+        d3.selectAll("label.checkbox")
+        .style("color",function(){
+        var label_country = this.classList[1];
+        return brewer[indexes_country[label_country]];
+        });
+
+      }
+
+      help();
+
+      });
+}
+
+function draw_help_button_close(){
+
+    help_button.html("&#10006;")
+    .attr("href","#")
+    .style("background-color","black")
+    .on("click",function(){
+
+      execute_animation = 0;
+      execute_help = 0;
+      country_index = 10;
+      d3.select("layer").style("visibility","hidden");
+
+      if(index_help_interval < 4){
+
+      clearInterval(help_interval);
+
+      d3.select("text.y_arrow").remove();
+
+      d3.select("div.help_tooltip").remove();
+
+      svg.select(".graph").remove();
+
+      svg.selectAll("path.country").remove();
+
+      d3.selectAll(".legend_country").remove();
+
+          if(index_help_interval === 0){
+            d3.select("g.help")
+            .attr("class","y axis");
+          }          
+
+          if(index_help_interval === 1){
+            d3.select("g.help")
+            .attr("class","x axis");
+          }
+      if (analysis_years === 0){
+      //draw_legends("country",all_countries);
+      brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+      draw_axes_and_graph(nested_by_month_init,all_countries);
+    }
+    else{
+
+      d3.select("h1")
+      .text("Predictability of Football Games Outcome by Season");
+
+      d3.selectAll(".checkbox")
+        .attr("type","radio")
+        .property("checked",function(){
+          if (this.value === selected_country){
+            return true;
+          }
+          else{
+            return false;
+          }
+        })
+        .on("change",function(){
+          selected_country = this.value;
+          svg.select(".graph").remove();
+          draw_analysis_years(selected_country);
+        });
+        analysis_years = 1;
+        d3.select(".legend_size")
+        .remove();
+
+        d3.selectAll("label.checkbox")
+        .style("color","black");
+        draw_legend_size("years");
+        draw_legends("year","");
+        draw_analysis_years(selected_country);
+    }
+    }
+
+    d3.selectAll("label.checkbox").style("-webkit-filter", "blur(0px)");
+    draw_help_button_open();
+
+    });
+}
+
+    var svg = d3.select("body")
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+    var tooltip = d3.select("body").append("div")
+    .attr("class","tooltip")
+    .style("opacity",0);
+
+    function draw_legends(id,all_countries){
+
+      if (id === "country"){
+        var legend_dataset = all_countries;
+        brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"]
+      }
+      else{
+        var legend_dataset = years;
+        brewer = ['rgb(228,26,28)','rgb(55,126,184)','rgb(77,175,74)','rgb(152,78,163)']
+      }
+
+
+    var legend_countries = svg.append("g")
+    .attr("class","legend_country")
+    .attr("transform","translate(" + (width - 2*margin + 50) + "," + 250 + ")")
+    .selectAll("g")
+    .data(legend_dataset,function(d){return d;});
+
+    d3.select(".legend_country")
+    .append("text")
+    .text(function(){
+      if (id === "country"){
+          return "Countries";
+      }
+      else{
+        return "Years";
+      }
+    });
+
+    legend_countries
+    .enter()
+    .append("circle")
+    .attr("cy",function(d,i){
+      return (i+1) * 30;
+    })
+    .attr("r",2)
+    .attr("fill",function(d){
+      if (id === "country"){
+          return brewer[indexes_country[d]];
+      }
+      else{
+        return brewer[indexes_year[d]];
+      }
+    });
+
+    legend_countries
+    .enter()
+    .append("text")
+    .attr("y",function(d,i){
+      return (i+1) * 30 + 5;
+    })
+    .attr("x",20)
+    .text(function(d){
+      return d;
+    })
+    .attr("fill",function(d){
+      if (id === "country"){
+        return brewer[indexes_country[d]];
+      }
+      else{
+        return brewer[indexes_year[d]];
+      }
+    });
+
+  }
+
+  function draw_legend_analysis(){
+
+    var legend_analysis = d3.select("body").append("div")
+    .attr("class","legend_analysis")
+    .style("position","absolute")
+    .style("top","125px")
+    .style("left","" + (width - 2*margin + 50) + "px")
+    .style("width","100px")
+    .style("height","100px");
+
+    d3.select(".legend_analysis")
+    .append("div")
+    .style("margin-bottom","10px")
+    .style("margin-left","5px")
+    .text("Analysis");
+
+    var buttons_radio = legend_analysis.selectAll("g").data(["By Month","By Season"]);
+
+    var r_label = buttons_radio.enter().append("g");
+
+    r_label.append("input")
+    .attr("class",function(d){return "radio " + d.slice(-5) + "";})
+    .attr("type","radio")
+    .attr("id",function(d){return d.slice(-5);})
+    .attr("value",function(d){return d.slice(-5);})
+    .attr("name","analysis")
+    .property("checked",function(d){
+      if (d.slice(-5) === "Month"){
+        return true;
+      }
+      else{
+        return false;
+      }
+    })
+    .on("change",function(){
+      if (this.value === "eason"){
+
+        brewer = ['rgb(228,26,28)','rgb(55,126,184)','rgb(77,175,74)','rgb(152,78,163)']
+
+        d3.select("h1")
+        .text("Predictability of Football Games Outcome by Season");
+
+        d3.select(".legend_size")
+        .remove();
+
+        svg.select(".graph").remove();
+        svg.selectAll("path.country").remove();
+        d3.selectAll(".legend_country").remove();
+        d3.selectAll("label.checkbox")
+        .style("color","black");
+
+        d3.selectAll(".checkbox")
+        .attr("type","radio")
+        .property("checked",function(){
+          if (this.value === selected_country){
+            return true;
+          }
+          else{
+            return false;
+          }
+        })
+        .on("change",function(){
+          selected_country = this.value;
+          svg.select(".graph").remove();
+          draw_analysis_years(selected_country);
+        });
+
+        analysis_years = 1;
+        draw_legend_size("years");
+        draw_legends("year","");
+        draw_analysis_years(selected_country);
+      }
+
+      else{
+
+        brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+
+        d3.select("h1")
+        .text("Predictability of Football Games Outcome by Month (2011-2015)");
+
+        analysis_years = 0;
+        d3.selectAll("label.checkbox")
+        .style("color",function(){
+          var label_country = this.classList[1];
+          return brewer[indexes_country[label_country]];
+
+        });
+        d3.selectAll(".checkbox")
+        .attr("type","checkbox")
+        .property("checked",true)
+        .on("change", function() {
+      var chosen_country = this.value;
+      var checked = this.checked;
+
+      if (checked){
+        add_country(chosen_country);
+      }
+      else{
+        remove_country(chosen_country);
+      }
+    }
+      );
+      
+
+        all_countries = ["England","France","Germany","Italy","Spain"];
+        svg.select(".graph").remove();
+        d3.selectAll(".legend_country").remove();      
+        d3.select(".legend_size").remove();
+        draw_legend_size("months");
+        //draw_legends("country",all_countries);
+        draw_axes_and_graph(nested_by_month_init,all_countries);
+      }
+    });
+
+    r_label.append("label")
+    .attr("for",function(d){return d.slice(-5);})
+    .attr("class",function(d){return d.slice(-5);})
+    .text(function(d){return d;});
+}
+
+    function agg_odds_years(leaves){
+
+        var month = format_month.parse(leaves[0]["Month"]);
+
+        if (month < new Date(1900,06,01)){
+          var month_scale = new Date(1901,month.getMonth(),01);
+        }
+        else{
+          var month_scale = month;
+        }
+
+      return {
+        'MonthYear' : MonthYear.parse(leaves[0]["MonthYear"]),
+        'Mean_Odds' : d3.median(leaves,function(d){return d['Mean_Odds'];}),
+        'Count' : d3.sum(leaves,function(d){return 1;}),
+        'Season' : leaves[0]["Season"],
+        'Country' : leaves[0]["Country"],
+        'Month' : month_scale
+      }
+
+      }
+
+    function draw_analysis_years(country){
+        var country_data = data.filter(function(d){return d['Country'] === country;});
+      
+        nested_country_data = d3.nest()
+        .key(function(d){
+          return d['MonthYear'];
+          })
+        .rollup(agg_odds_years)
+        .entries(country_data)
+
+        nested_by_years = nested_country_data.sort(function(a, b){return d3.ascending(a.values['Month'], b.values['Month']) || d3.descending(a.values['Count'], b.values['Count']); });
+
+        var x_scale = d3.time.scale()
+        .domain([new Date(1900,07,01),new Date(1901,05,01)])
+        .range([margin,width - (2*margin)]);
+
+        var y_scale = d3.scale.linear()
+        .domain([1,3.5])
+        .range([height - 2*margin,margin*1.5]);
+
+        var line = d3.svg.line()
+        .x(function(d){return x_scale(d.values["Month"])})
+        .y(function(d){return y_scale(d.values["Mean_Odds"])});
+      
+      var graph = svg.append("g")
+      .attr("class","graph");
+
+      for (var year in years){
+
+        var filtered = nested_by_years.filter(function(d){
+          return +d.values['Season'] === years[year];
+        });
+
+      graph.append("path")
+      .attr("class","year " + years[year] + "")
+      .attr("d",line(filtered))
+      .attr("fill","none")
+      .style("stroke-opacity",0.4)
+      .style("stroke",brewer[indexes_year[years[year]]]);
+      }
+
+      graph.selectAll("circle")
+      .data(nested_by_years,function(d){return d.key;})
+      .enter().append("circle")
+      .attr("class",function(d){
+        return d.values['Country'] + "-" + d.key + " " + d.values['Country'] + "";
+      })
+      .attr("cx", function(d){ return x_scale(d.values["Month"]);})
+      .attr("cy", function(d){return y_scale(d.values["Mean_Odds"]);})
+      .attr("r",function(d){ return d.values["Count"] / 5;})
+      .style("fill", function(d){
+        return brewer[indexes_year[d.values['Season']]];
+      })
+      .on("mouseover", function(d) {  
+      tooltip.transition()        
+        .duration(200)      
+        .style("opacity", .9)
+        .style("background",brewer[indexes_year[d.values['Season']]]);
+
+      tooltip.html(d.values['Country'] + "<br/>"  + d.values['Count'] + " games<br />Avg. Odd: " + d3.round(d.values['Mean_Odds'],2))  
+        .style("left", (d3.event.pageX) + "px")     
+        .style("top", (d3.event.pageY - 28) + "px");    
+      })                  
+      .on("mouseout", function(d) {       
+      tooltip.transition()        
+        .duration(500)      
+        .style("opacity", 0);   
+      });
+
+
+    }
+
+draw_legend_size("months");
+
+function draw_legend_size(scale){
+    if (scale === "months"){
+      var list = [10,50,100,200];
+      var dimension = 20;
+    }
+    else{
+     var list = [20,30,40,50]; 
+     var dimension = 5;
+    }
+    var legend_size = svg.append("g")
+    .attr("class","legend_size")
+    .attr("transform","translate(" + (width - 2*margin + 50) + "," + 450 + ")")
+    .selectAll("g")
+    .data(list)
+    .enter();
+
+    d3.select(".legend_size")
+    .append("text")
+    .text("Games");
+
+    legend_size.append("circle")
+    .attr("cy",function(d,i){
+      return (i+1) * 30;
+    })
+    .attr("r",function(d){
+      return d / dimension;
+    });
+
+    legend_size.append("text")
+    .attr("y",function(d,i){
+      return (i+1) * 30 + 5;
+    })
+    .attr("x",20)
+    .text(function(d){
+      return d;
+    });
+}
+
+    var nested = d3.nest()
+    .key(function(d){
+          return d['Country'] + "-" + d['MonthYear'];
+          })
+        .rollup(agg_odds)
+        .entries(data);
+
+    nested = nested.sort(function(a, b){return d3.ascending(a.values['MonthYear'], b.values['MonthYear']); });
+
+    var nested_by_month = d3.nest()
+    .key(function(d){
+      return d.values['Country'] + "-" + d.values['Month'];
+    })
+    .rollup(agg_odds_month)
+    .entries(nested);
+    
+    nested_by_month = nested_by_month.sort(function(a, b){return d3.ascending(a.values['Month'], b.values['Month']) || d3.descending(a.values['Count'], b.values['Count']); });
+
+    var nested_by_month_init = nested_by_month;
+
+    function draw_axes_and_graph(dataset,countries){
+
+    var max_odds = d3.max(dataset,function(d){
+      return d.values['Mean_Odds'];
+    });
+
+    var time_extent = d3.extent(dataset, function(d){
+      return d.values["Date"];
+    });
+
+    var x_scale = d3.time.scale()
+    .domain([new Date(1900,07,01),new Date(1901,05,01)])
+    .range([margin,width - (2*margin)]);
+
+    var y_scale = d3.scale.linear()
+    .domain([1,3.5])
+    .range([height - 2*margin,margin*1.5]);
+
+    var x_axis = d3.svg.axis()
+    .scale(x_scale)
+    .tickFormat(d3.time.format('%b'))
+    .tickSize(-height  + 2*margin + y_scale(3.5),0);
+
+    var y_axis = d3.svg.axis()
+    .scale(y_scale)
+    .orient("left");
+
+    if (d3.select(".axis").empty()){
+
+    d3.select("svg")
+    .append("g")
+    .attr("class","x axis")
+    .attr("transform","translate(0," + (height - 2*margin) + ")")
+    .call(x_axis)
+    .append("text")
+    .text("Month of Football Season")
+    .attr("x",(width/2-margin))
+    .attr("y", margin/2)
+    .style("font-size","14");
+
+    d3.select("svg")
+    .append("g")
+    .attr("class","y axis")
+    .attr("transform","translate(" + margin + ",0)")
+    .call(y_axis)
+    .append("text")
+    .text("Average Winning Odd per Game")
+    .attr("transform", "rotate(-90,-43,0) translate(-500)")
+    .style("font-size","14");
+  }
+
+      var line = d3.svg.line()
+      .x(function(d){return x_scale(d.values["Month"])})
+      .y(function(d){return y_scale(d.values["Mean_Odds"])});
+      
+      var graph = svg.append("g")
+      .attr("class","graph");
+
+      for (var country in countries){
+
+        var filtered = dataset.filter(function(d){
+          return d.values['Country'] === countries[country];
+        });
+
+      graph.append("path")
+      .attr("class","country " + countries[country] + "")
+      .attr("d",line(filtered))
+      .attr("fill","none")
+      .style("stroke-opacity",0.4)
+      .style("stroke",brewer[indexes_country[countries[country]]]);
+      
+      }
+
+      graph.selectAll("circle")
+      .data(dataset,function(d){return d.key;})
+      .enter().append("circle")
+      .attr("class",function(d){
+        return d.values['Country'] + "-" + format_month(d.values['Month']) + " " + d.values['Country'] + "";
+      })
+      .attr("cx", function(d){ return x_scale(d.values["Month"]);})
+      .attr("cy", function(d){return y_scale(d.values["Mean_Odds"]);})
+      .attr("r",function(d){ return d.values["Count"] / 20;})
+      .style("fill", function(d){
+        return brewer[indexes_country[d.values['Country']]];
+      })
+      .on("mouseover", function(d) {  
+      tooltip.transition()        
+        .duration(200)      
+        .style("opacity", .9)
+        .style("background",brewer[indexes_country[d.values['Country']]]);
+
+      tooltip.html(d.values['Country'] + "<br/>"  + d.values['Count'] + " games<br />Avg. Odd: " + d3.round(d.values['Mean_Odds'],2))  
+        .style("left", (d3.event.pageX) + "px")     
+        .style("top", (d3.event.pageY - 28) + "px");    
+      })                  
+      .on("mouseout", function(d) {       
+      tooltip.transition()        
+        .duration(500)      
+        .style("opacity", 0);   
+      });
+      
+    }
+
+    function remove_country(country){
+
+    var i = all_countries.indexOf(country);
+
+    if(i != -1) {
+      all_countries.splice(i, 1).sort();
+    }
+
+    var nested_by_month_filtered = nested_by_month.filter(function(d){
+        return all_countries.indexOf(d.values['Country']) > -1;
+      });
+
+    var circles = svg.select(".graph").selectAll('circle')
+    .data(nested_by_month_filtered,function(d){
+        return d.key;});
+
+    circles.exit().remove();
+
+    d3.selectAll(".legend_country")
+    .remove();
+    
+    d3.selectAll("path.country." + country + "")
+    .remove();
+
+    //draw_legends("country",all_countries);
+
+    }
+
+    function add_country(country){
+
+      all_countries.push(country);
+
+      all_countries = all_countries.sort();
+
+      svg.select(".graph")
+      .remove();
+
+      svg.selectAll("path.country")
+      .remove();
+
+      d3.selectAll(".legend_country")
+      .remove();
+
+
+      var nested_by_month_filtered = nested_by_month.filter(function(d){
+        return all_countries.indexOf(d.values['Country']) > -1;
+      });
+      
+      draw_axes_and_graph(nested_by_month_filtered,all_countries);
+      //draw_legends("country",all_countries);
+    }
+
+    var execute_help = 1;
+    var country_index = 0;
+    var index_help_interval = 0;
+    var help_interval = 0;
+    var country_init = [all_countries[country_index]];
+
+    function help(){
+      var nested_by_month_filtered = nested_by_month.filter(function(d){
+      return d.values['Country'] === all_countries[country_index];
+    });
+
+      draw_axes_and_graph(nested_by_month_filtered,country_init);
+      //draw_legends("country",country_init);
+
+      while(execute_help === 1){
+
+      d3.select("g.y")
+      .attr("class","help");
+
+      d3.select("body")
+      .append("div")
+      .attr("class","help_tooltip")
+      .html("<u>Average Betting Odd for Final Result (Winning Odd)</u><br/><br/> Odds gathered and averaged from 6 different international betting companies: <br/><br/>bet365, bwin, interwetten, ladbrokes, betvictor & william hill<br/><br/><u>Analysis</u> : <br/><br/><ul><li>High Winning Odd: Low Predictability</li> <li>Low Winning Odd: High Predictability</li></ul>");
+
+      d3.select("g.graph")
+      .append("text")
+      .attr("class","y_arrow")
+      .transition()
+      .duration(500)
+      .attr("x","100")
+      .attr("y","500")
+      .text("\u21E6");
+
+        help_interval = setInterval(function(){
+
+          index_help_interval++;
+          if(index_help_interval === 1){
+            d3.select("g.help")
+            .attr("class","y axis");
+
+            d3.select("g.x")
+            .attr("class","help");
+
+            d3.select("text.y_arrow")
+            .transition()
+            .duration(500)
+            .attr("transform","rotate(-90 200 500) translate(0,300)");
+            }
+
+            d3.select("div.help_tooltip")
+            .style("height","40px")
+            .style("top","415px")
+            .style("line-height","40px")
+            .html("Month of the Soccer Season");
+
+          if(index_help_interval === 2){
+
+            d3.select("text.y_arrow")
+            .transition()
+            .duration(500)
+            .attr("transform","rotate(90 200 200) translate(20,-550)");
+          
+            d3.select("g.help")
+            .attr("class","x axis");
+
+            d3.select("div.help_tooltip")
+            .style("height","40px")
+            .style("top","275px")
+            .style("line-height","40px")
+            .html("Selected countries");
+
+          }
+
+          if(index_help_interval === 3){
+            d3.select("g.help")
+            .attr("class","x axis");
+
+            d3.select("text.y_arrow")
+            .remove();
+
+            d3.select("div.help_tooltip")
+            .remove();
+
+            index_help_interval++;
+            clearInterval(help_interval);
+            execute_help = 0;
+            initiate_animation();
+          }
+
+        },8000);
+execute_help = 0;
+};
+}
+
+help();
+
+    var execute_animation = 1;
+    var country_interval = 0;
+
+function initiate_animation(){
+
+      while (execute_animation === 1){
+
+      country_index++;
+
+      d3.selectAll("label.checkbox").style("-webkit-filter", "blur(2px)");
+
+      d3.select("label.England").style("-webkit-filter", "blur(0px)");
+
+      d3.select("body")
+      .append("h1")
+      .attr("class","background_country")
+      .text(country_init[0])
+      .style("width","" + (width-3*margin) +"px")
+      .style("top","" + (height/2 - 2*margin) + "px")
+      .style("left","" + margin + "px")
+      .style("fill","blue");
+
+      var country_interval = setInterval(function(){
+
+      var country_init = [all_countries[country_index]];
+
+      var nested_by_month_filtered = nested_by_month.filter(function(d){
+      return d.values['Country'] === all_countries[country_index];
+    });
+
+      svg.select(".graph").remove();
+
+      svg.selectAll("path.country").remove();
+
+      d3.selectAll(".legend_country").remove();
+
+      d3.selectAll("label.checkbox").style("-webkit-filter", "blur(2px)");
+
+      d3.select("label." + all_countries[country_index] + "")
+      .style("-webkit-filter","blur(0px)");
+
+      country_index++;
+
+      d3.select(".background_country").text(country_init[0]);
+
+      draw_axes_and_graph(nested_by_month_filtered,country_init);
+      //draw_legends("country",country_init);
+
+      if(country_index > all_countries.length){
+
+      d3.selectAll("label").style("visibility","visible");
+      svg.select(".graph").remove();
+      svg.selectAll("path.country").remove();
+      d3.selectAll(".legend_country").remove();
+      d3.selectAll(".background_country").remove();
+      d3.selectAll("label.checkbox").style("-webkit-filter", "blur(0px)");      
+
+      if (analysis_years === 0){
+      //draw_legends("country",all_countries);
+      brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+      draw_axes_and_graph(nested_by_month_init,all_countries);
+      }
+      else{
+
+        d3.selectAll("label.checkbox")
+        .style("color","black");
+
+        var brewer = ["#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e"];
+
+        d3.select("h1")
+        .text("Predictability of Football Games Outcome by Season");
+
+        d3.selectAll(".checkbox")
+        .attr("type","radio")
+        .property("checked",function(){
+          if (this.value === selected_country){
+            return true;
+          }
+          else{
+            return false;
+          }
+        })
+        .on("change",function(){
+          selected_country = this.value;
+          svg.select(".graph").remove();
+          draw_analysis_years(selected_country);
+        });
+        
+        analysis_years = 1;
+        d3.select(".legend_size")
+        .remove();
+        draw_legend_size("years");
+        draw_legends("year","");
+        draw_analysis_years(selected_country);
+      }
+
+      d3.select("layer").style("visibility","hidden");
+
+      clearInterval(country_interval);
+      execute_animation = 0;
+      draw_help_button_open();
+      }
+
+    },3000);
+execute_animation = 0;
+  }
+}
+
+
+}
+  </script>
+</head>
+<body>
+  <script type="text/javascript">
+
+  var MonthYear = d3.time.format("%b %Y");
+  var format = d3.time.format("%d/%m/%Y");
+  var format_month = d3.time.format("%b");
+
+  d3.tsv("Full_Dataset.tsv",function(d){
+
+    var result = d['FTR'];
+    var mean_odds = d3.median([d['B365' + result + ''],d['BW' + result + ''],d['IW' + result + ''],d['LB' + result + ''],d['VC' + result + ''],d['WH' + result + '']]);
+      var origin_date = format.parse(d['Date']);
+
+      return{
+        'Month' : format_month(origin_date),
+        'MonthYear' : MonthYear(origin_date),
+        'Season' : d['Year'],
+        'Country' : d['Div'],
+        'Mean_Odds' : mean_odds
+      }
+  },draw);
+  </script>
+</body>
+</html>
