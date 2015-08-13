@@ -14,7 +14,7 @@ The betting accuracy is calculated by looking at the lowest betting odd for a sp
 
 ### Design
 
-I had initially created only a single graph and I was allowing the user to switch from a accumulated view to a single season view and this seemed to mislead the readers. I therefore, as suggested by a coach on the forum, to add a second graph which would be specifically used to dive into specific seasons.
+I had initially created only a single graph and I was allowing the user to switch from a accumulated view to a single season view and this seemed to mislead the readers. I therefore, as suggested by a coach on the forum, added a second graph which would be specifically used to dive into specific seasons.
 
 Another issue was the values for the y-axis as I initially used betting odds (usually between 1 and 3), however it was difficult to understand for people who do not know how betting odds work. I therefore decided to change the y-axis to values which are more understandble by the public : A percentage of games accurately predicted by the betting company
 
@@ -22,11 +22,11 @@ I used a scatter plot combined with a line plot so the reader can actually see i
 
 I initally had created an animation in order to introduce the reader to the concept of betting odds and also indicating how to use the plot, however it attracted more negative than positive feedback. As I changed the y-axis values to a more understandble concept (percentages), I decided to remove the animation. It was a good exercise and introduction to animations with d3.js though. The animation is available in the original visualization
 
-All colors being used in my visualizations have been generated from http://colorbrewer2.org/ in order to have a well-defined and suitable set of colors
+All colors being used in my visualizations have been generated from http://colorbrewer2.org/ in order to have a well-defined and suitable set of colors. All aesthetics suggestions from feedback have been implemented (fonts, opacity etc..)
 
 ### Feedback
 
-Most of the feedback has been received from the UDacity forum on this link : https://discussions.udacity.com/t/project-6-feedback-required-on-football-soccer-games-betting-rates/28073/12
+Most of the feedback has been received from the Udacity forum on this link : https://discussions.udacity.com/t/project-6-feedback-required-on-football-soccer-games-betting-rates/28073/12
 
 ###### Feedback No.1 : Munir
 
