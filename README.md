@@ -5,6 +5,8 @@
 ### Summary
 
 Visualization link : http://bl.ocks.org/8a313a5f7e0fe2f2cad
+Original Visuaization : http://bl.ocks.org/kaltera/raw/9d283f5c94b167bb1c24/
+Note that index_original.html is not commented, I only commented the final html file
 
 This visualization is about the ability of betting companies to accurately predict football games outcome and to identify if there are any months which are less or more predictable than others due to external effects, or simply chance.
 
